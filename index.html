@@ -6,68 +6,87 @@
 <title>回せ。</title>
 
 <style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: #f5f5f5;
-  perspective: 800px;
-}
-
-.scene {
-  width: 240px;
-  height: 240px;
-  position: relative;
-}
-
-.sphere {
-  width: 240px;
-  height: 240px;
-  position: relative;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 30%,
-      #ffffff 0%,
-      #dddddd 45%,
-      #888888 100%);
-  box-shadow: 0 18px 35px rgba(0,0,0,.18);
-  transform-style: preserve-3d;
-
-  animation: mawase 5s linear infinite;
-}
-
-/* 回っていることを確認するための目印 */
-.marker {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  left: 104px;
-  top: 104px;
-  border-radius: 50%;
-  background: #222;
-
-  transform: translateZ(120px);
-}
-
-@keyframes mawase {
-  from {
-    transform: rotateY(0deg);
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #f5f5f5;
   }
-  to {
-    transform: rotateY(360deg);
+
+  canvas {
+    display: block;
   }
-}
 </style>
 </head>
 
 <body>
 
-<div class="scene">
-  <div class="sphere">
-    <div class="marker"></div>
-  </div>
-</div>
+<script type="module">
+import * as THREE from
+'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf5f5f5);
+
+const camera = new THREE.PerspectiveCamera(
+  45,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
+camera.position.z = 4;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+// 本物の球
+const geometry = new THREE.SphereGeometry(1.25, 48, 32);
+
+const material = new THREE.MeshStandardMaterial({
+  color: 0xdddddd,
+  roughness: 0.65,
+  metalness: 0
+});
+
+const sphere = new THREE.Mesh(geometry, material);
+scene.add(sphere);
+
+// 回転が分かる目印
+const markerGeometry = new THREE.SphereGeometry(0.12, 24, 16);
+const markerMaterial = new THREE.MeshStandardMaterial({
+  color: 0x222222
+});
+
+const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+marker.position.set(0, 0, 1.25);
+sphere.add(marker);
+
+// 光
+const light1 = new THREE.DirectionalLight(0xffffff, 3);
+light1.position.set(3, 4, 5);
+scene.add(light1);
+
+const light2 = new THREE.AmbientLight(0xffffff, 1.5);
+scene.add(light2);
+
+// 回せ。
+function animate() {
+  requestAnimationFrame(animate);
+
+  sphere.rotation.y += 0.012;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
 
 </body>
 </html>
