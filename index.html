@@ -4,27 +4,70 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>回せ。</title>
-<style>
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    background: #f5f5f5;
-  }
 
-  .sphere {
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #dddddd 45%, #888888 100%);
-    box-shadow: 0 18px 35px rgba(0,0,0,.18);
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f5f5f5;
+  perspective: 800px;
+}
+
+.scene {
+  width: 240px;
+  height: 240px;
+  position: relative;
+}
+
+.sphere {
+  width: 240px;
+  height: 240px;
+  position: relative;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%,
+      #ffffff 0%,
+      #dddddd 45%,
+      #888888 100%);
+  box-shadow: 0 18px 35px rgba(0,0,0,.18);
+  transform-style: preserve-3d;
+
+  animation: mawase 5s linear infinite;
+}
+
+/* 回っていることを確認するための目印 */
+.marker {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  left: 104px;
+  top: 104px;
+  border-radius: 50%;
+  background: #222;
+
+  transform: translateZ(120px);
+}
+
+@keyframes mawase {
+  from {
+    transform: rotateY(0deg);
   }
+  to {
+    transform: rotateY(360deg);
+  }
+}
 </style>
 </head>
+
 <body>
 
-<div class="sphere"></div>
+<div class="scene">
+  <div class="sphere">
+    <div class="marker"></div>
+  </div>
+</div>
 
 </body>
 </html>
