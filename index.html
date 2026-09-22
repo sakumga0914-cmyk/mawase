@@ -58,8 +58,10 @@ scene.add(sphere);
   // 写真の代役カード
 const cardGeometry = new THREE.PlaneGeometry(0.35, 0.35);
 
+const texture = new THREE.TextureLoader().load('./DSC_0034.jpeg');
+
 const cardMaterial = new THREE.MeshBasicMaterial({
-  color: 0x222222,
+  map: texture,
   side: THREE.DoubleSide
 });
 
