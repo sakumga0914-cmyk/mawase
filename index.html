@@ -41,7 +41,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
 // 本物の球
-const geometry = new THREE.SphereGeometry(1.25, 48, 32);
+const geometry = new THREE.SphereGeometry(0.85, 48, 32);
 
 const material = new THREE.MeshStandardMaterial({
   color: 0xdddddd,
@@ -59,7 +59,7 @@ const markerMaterial = new THREE.MeshStandardMaterial({
 });
 
 const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-marker.position.set(0, 0, 1.25);
+marker.position.set(0, 0,0.85);
 sphere.add(marker);
 
 // 光
