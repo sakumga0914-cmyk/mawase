@@ -106,14 +106,25 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
 scene.add(ambientLight);
 
 // 回せ。
+let time = 0;
+
 function animate() {
   requestAnimationFrame(animate);
 
-sphere.rotation.y += 0.012;
-cards.rotation.y += 0.012;
+  time += 0.01;
+
+  // ゆっくり横回転
+  sphere.rotation.y += 0.006;
+  cards.rotation.y += 0.006;
+
+  // ヘタ式：±15°をゆっくり往復
+  const tilt = Math.sin(time * 0.25) * THREE.MathUtils.degToRad(15);
+
+  sphere.rotation.z = tilt;
+  cards.rotation.z = tilt;
+
   renderer.render(scene, camera);
 }
-
 animate();
 
 window.addEventListener('resize', () => {
