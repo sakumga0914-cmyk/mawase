@@ -35,13 +35,17 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.z = 4;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
+
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
-// 本物の球
-const geometry = new THREE.SphereGeometry(0.85, 48, 32);
+// 球
+const geometry = new THREE.SphereGeometry(0.85, 64, 48);
 
 const material = new THREE.MeshStandardMaterial({
   color: 0xdddddd,
@@ -52,23 +56,13 @@ const material = new THREE.MeshStandardMaterial({
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
-// 回転が分かる目印
-const markerGeometry = new THREE.SphereGeometry(0.12, 24, 16);
-const markerMaterial = new THREE.MeshStandardMaterial({
-  color: 0x222222
-});
-
-const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-marker.position.set(0, 0,0.85);
-sphere.add(marker);
-
 // 光
-const light1 = new THREE.DirectionalLight(0xffffff, 3);
-light1.position.set(3, 4, 5);
-scene.add(light1);
+const mainLight = new THREE.DirectionalLight(0xffffff, 3);
+mainLight.position.set(3, 4, 5);
+scene.add(mainLight);
 
-const light2 = new THREE.AmbientLight(0xffffff, 1.5);
-scene.add(light2);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+scene.add(ambientLight);
 
 // 回せ。
 function animate() {
