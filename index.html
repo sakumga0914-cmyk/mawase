@@ -55,6 +55,21 @@ const material = new THREE.MeshStandardMaterial({
 
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
+  // 写真の代役カード
+const cardGeometry = new THREE.PlaneGeometry(0.35, 0.35);
+
+const cardMaterial = new THREE.MeshBasicMaterial({
+  color: 0x222222,
+  side: THREE.DoubleSide
+});
+
+const card = new THREE.Mesh(cardGeometry, cardMaterial);
+
+// 球の表面に置く
+card.position.set(0, 0, 0.86);
+
+// 球と一緒に回す
+sphere.add(card);
 
 // 光
 const mainLight = new THREE.DirectionalLight(0xffffff, 3);
