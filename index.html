@@ -54,25 +54,49 @@ const material = new THREE.MeshStandardMaterial({
 });
 
 const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
-  // 写真の代役カード
-const cardGeometry = new THREE.PlaneGeometry(0.35, 0.35);
-
+scene.add(sphere);// 写真を球面に30枚配置
 const texture = new THREE.TextureLoader().load('./DSC_0034.jpeg');
 
-const cardMaterial = new THREE.MeshBasicMaterial({
-  map: texture,
-  side: THREE.DoubleSide
-});
+const cards = new THREE.Group();
+scene.add(cards);
 
-const card = new THREE.Mesh(cardGeometry, cardMaterial);
+const count = 30;
+const radius = 0.90;
 
-// 球の表面に置く
-card.position.set(0, 0, 1.30);
+for (let i = 0; i < count; i++) {
 
-// 球と一緒に回す
-scene.add(card);
+  // 球面へなるべく均等に配置
+  const y = 1 - (i / (count - 1)) * 2;
+  const r = Math.sqrt(1 - y * y);
+  const theta = Math.PI * (3 - Math.sqrt(5)) * i;
 
+  const x = Math.cos(theta) * r;
+  const z = Math.sin(theta) * r;
+
+  const cardGeometry = new THREE.PlaneGeometry(0.38, 0.38);
+
+  const cardMaterial = new THREE.MeshBasicMaterial({
+    map: texture,
+    side: THREE.DoubleSide
+  });
+
+  const card = new THREE.Mesh(cardGeometry, cardMaterial);
+
+  card.position.set(
+    x * radius,
+    y * radius,
+    z * radius
+  );
+
+  // 写真の表を球の外側へ向ける
+  card.lookAt(
+    x * 2,
+    y * 2,
+    z * 2
+  );
+
+  cards.add(card);
+}
 // 光
 const mainLight = new THREE.DirectionalLight(0xffffff, 3);
 mainLight.position.set(3, 4, 5);
@@ -85,13 +109,8 @@ scene.add(ambientLight);
 function animate() {
   requestAnimationFrame(animate);
 
-  sphere.rotation.y += 0.012;
-
-const angle = sphere.rotation.y;
-card.position.x = Math.sin(angle) * 0.88;
-card.position.z = Math.cos(angle) * 0.88;
-card.rotation.y = angle;
-
+sphere.rotation.y += 0.012;
+cards.rotation.y += 0.012;
   renderer.render(scene, camera);
 }
 
