@@ -59,7 +59,7 @@
 <div id="controls">
   <label for="photoInput">写真を追加</label>
   <input id="photoInput" type="file" accept="image/*" multiple>
-  <span id="photoCount">テスト画像 1枚 × 100</span>
+  <span id="photoCount">🍏 回転試作</span>
   <select id="layoutMode" aria-label="配置">
     <option value="golden" selected>黄金角</option>
     <option value="rows">横ライン</option>
@@ -104,23 +104,71 @@ const layoutMode = document.getElementById('layoutMode');
 let currentTextures = [];
 let usingUploadedPhotos = false;
 
-// 球
-const geometry = new THREE.SphereGeometry(0.85, 64, 48);
+// 🍏 試作：球を少しだけリンゴ形へ変形
+const geometry = new THREE.SphereGeometry(0.85, 96, 64);
+{
+  const pos = geometry.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const yN = v.y / 0.85;
+    const radial = Math.sqrt(v.x * v.x + v.z * v.z) / 0.85;
+
+    // 肩をふっくら、上下を少し絞る。真球感は残す。
+    let scaleXZ = 1.0 + 0.055 * (1 - yN * yN);
+    scaleXZ -= 0.045 * Math.pow(Math.abs(yN), 3);
+
+    // ヘタ周りの浅いくぼみ
+    const topDent = Math.max(0, (yN - 0.68) / 0.32);
+    const dent = 0.075 * topDent * topDent * Math.max(0, 1 - radial);
+
+    v.x *= scaleXZ;
+    v.z *= scaleXZ;
+    v.y -= dent;
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
 
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xdff3dc,
-  roughness: 0.28,
+  color: 0x78b83f,
+  roughness: 0.34,
   metalness: 0.02,
-  clearcoat: 0.65,
+  clearcoat: 0.52,
   clearcoatRoughness: 0.18
 });
 
 const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
+const apple = new THREE.Group();
+apple.add(sphere);
+
+// ヘタ
+const stem = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.035, 0.045, 0.32, 18),
+  new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
+);
+stem.position.set(0.02, 0.96, 0);
+stem.rotation.z = -0.10;
+apple.add(stem);
+
+// 葉っぱ：薄い楕円を少し傾ける
+const leaf = new THREE.Mesh(
+  new THREE.SphereGeometry(0.18, 28, 16),
+  new THREE.MeshStandardMaterial({ color: 0x3f7f32, roughness: 0.65 })
+);
+leaf.scale.set(1.45, 0.08, 0.62);
+leaf.position.set(0.18, 1.02, 0.01);
+leaf.rotation.z = -0.42;
+leaf.rotation.y = 0.35;
+apple.add(leaf);
+
+scene.add(apple);
 
 // 写真を球面に配置
 const cards = new THREE.Group();
 scene.add(cards);
+cards.visible = false; // 🍏の造形確認を先にする
 
 const defaultCount = 100;
 const radius = 0.90;
@@ -413,18 +461,14 @@ function animate() {
   time += 0.01;
 
   // ゆっくり横回転
-  sphere.rotation.y += 0.006;
-  cards.rotation.y += 0.006;
+  apple.rotation.y += 0.006;
 
   // X軸で前後に±20°、Z軸で左右に±10°。全球感を残しつつ、動きすぎを少し抑える。
   const tiltX = Math.sin(time * 0.22) * THREE.MathUtils.degToRad(20);
   const tiltZ = Math.cos(time * 0.18) * THREE.MathUtils.degToRad(10);
 
-  sphere.rotation.x = tiltX;
-  cards.rotation.x = tiltX;
-
-  sphere.rotation.z = tiltZ;
-  cards.rotation.z = tiltZ;
+  apple.rotation.x = tiltX;
+  apple.rotation.z = tiltZ;
 
   // カメラに対して横向きになった写真だけを暗くする。
   // 正面の写真は brightness=1.0 のままなので、写真自体は薄くならない。
