@@ -278,8 +278,8 @@ function animate() {
   sphere.rotation.y += 0.006;
   cards.rotation.y += 0.006;
 
-  // X軸で前後に±25°、Z軸で左右に±10°。上下の写真も見えるようにするテスト。
-  const tiltX = Math.sin(time * 0.22) * THREE.MathUtils.degToRad(25);
+  // X軸で前後に±20°、Z軸で左右に±10°。全球感を残しつつ、動きすぎを少し抑える。
+  const tiltX = Math.sin(time * 0.22) * THREE.MathUtils.degToRad(20);
   const tiltZ = Math.cos(time * 0.18) * THREE.MathUtils.degToRad(10);
 
   sphere.rotation.x = tiltX;
