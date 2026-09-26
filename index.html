@@ -161,6 +161,62 @@ apple.add(leaf);
 
 scene.add(apple);
 
+// 写真レイヤーは残すが、🍏造形確認中は非表示
+const cards = new THREE.Group();
+cards.visible = false;
+scene.add(cards);
+
+const defaultCount = 100;
+const radius = 0.90;
+const textureLoader = new THREE.TextureLoader();
+
+function prepareTexture(texture) {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  return texture;
+}
+
+function getTextureAspect(texture) {
+  const image = texture.image;
+  const width = image?.naturalWidth || image?.videoWidth || image?.width || 1;
+  const height = image?.naturalHeight || image?.videoHeight || image?.height || 1;
+  return width / height;
+}
+
+function getCardDimensions(texture, baseSize) {
+  const aspect = THREE.MathUtils.clamp(getTextureAspect(texture), 0.42, 2.4);
+  let width = baseSize * Math.sqrt(aspect);
+  let height = baseSize / Math.sqrt(aspect);
+  const maxLongSide = baseSize * 1.42;
+  const longSide = Math.max(width, height);
+  if (longSide > maxLongSide) {
+    const scale = maxLongSide / longSide;
+    width *= scale;
+    height *= scale;
+  }
+  return { width, height };
+}
+
+function createPlacementPoints(total) {
+  const points = [];
+  const yLimit = 0.82;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < total; i++) {
+    const y = yLimit - ((i + 0.5) / total) * (yLimit * 2);
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = goldenAngle * i;
+    points.push(new THREE.Vector3(Math.cos(theta) * r, y, Math.sin(theta) * r));
+  }
+  return points;
+}
+
+function createRowPlacementPoints(total) {
+  const yLimit = 0.82;
+  const approxRows = Math.max(3, Math.round(Math.sqrt(total * 0.8)));
+  const rows = [];
+
   for (let row = 0; row < approxRows; row++) {
     const y = yLimit - ((row + 0.5) / approxRows) * (yLimit * 2);
     const ringRadius = Math.sqrt(Math.max(0, 1 - y * y));
