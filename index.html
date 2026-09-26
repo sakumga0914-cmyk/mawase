@@ -165,7 +165,8 @@ function createCurvedCardGeometry(center, cardSize = 0.235, segments = 8) {
   const positions = [];
   const uvs = [];
   const indices = [];
-  const surfaceRadius = radius + 0.018;
+  const cardLift = 0.008;
+  const surfaceRadius = radius + cardLift;
 
   for (let iy = 0; iy <= segments; iy++) {
     const v = iy / segments;
