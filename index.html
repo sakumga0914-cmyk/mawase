@@ -15,10 +15,52 @@
   canvas {
     display: block;
   }
+
+  #controls {
+    position: fixed;
+    left: 50%;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+  }
+
+  #controls label {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #222;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  #photoInput {
+    display: none;
+  }
+
+  #photoCount {
+    white-space: nowrap;
+    color: #555;
+  }
 </style>
 </head>
 
 <body>
+
+<div id="controls">
+  <label for="photoInput">写真を追加</label>
+  <input id="photoInput" type="file" accept="image/*" multiple>
+  <span id="photoCount">テスト画像 1枚 × 100</span>
+</div>
 
 <script type="module">
 import * as THREE from
@@ -44,6 +86,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
+const photoInput = document.getElementById('photoInput');
+const photoCount = document.getElementById('photoCount');
+
 // 球
 const geometry = new THREE.SphereGeometry(0.85, 64, 48);
 
@@ -55,49 +100,73 @@ const material = new THREE.MeshStandardMaterial({
 
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);// 写真を球面に100枚配置
-const texture = new THREE.TextureLoader().load('./DSC_0034.jpeg');
-
 const cards = new THREE.Group();
 scene.add(cards);
 
 const count = 100;
 const radius = 0.90;
+const cardGeometry = new THREE.PlaneGeometry(0.26, 0.26);
+const textureLoader = new THREE.TextureLoader();
 
-for (let i = 0; i < count; i++) {
-
-  // 上下10%ずつを空け、残った帯の中へ均等に配置
-  const yLimit = 0.8;
-  const y = yLimit - (i / (count - 1)) * (yLimit * 2);
-  const r = Math.sqrt(1 - y * y);
-  const theta = Math.PI * (3 - Math.sqrt(5)) * i;
-
-  const x = Math.cos(theta) * r;
-  const z = Math.sin(theta) * r;
-
-  const cardGeometry = new THREE.PlaneGeometry(0.26, 0.26);
-
-  const cardMaterial = new THREE.MeshBasicMaterial({
-    map: texture,
-    side: THREE.DoubleSide
-  });
-
-  const card = new THREE.Mesh(cardGeometry, cardMaterial);
-
-  card.position.set(
-    x * radius,
-    y * radius,
-    z * radius
-  );
-
-  // 写真の表を球の外側へ向ける
-  card.lookAt(
-    x * 2,
-    y * 2,
-    z * 2
-  );
-
-  cards.add(card);
+function clearCards() {
+  while (cards.children.length) {
+    const card = cards.children.pop();
+    card.material.map?.dispose();
+    card.material.dispose();
+  }
 }
+
+function buildCards(textures) {
+  clearCards();
+
+  for (let i = 0; i < count; i++) {
+    // 上下10%ずつを空け、残った帯の中へ均等に配置
+    const yLimit = 0.8;
+    const y = yLimit - (i / (count - 1)) * (yLimit * 2);
+    const r = Math.sqrt(1 - y * y);
+    const theta = Math.PI * (3 - Math.sqrt(5)) * i;
+
+    const x = Math.cos(theta) * r;
+    const z = Math.sin(theta) * r;
+    const texture = textures[i % textures.length];
+
+    const cardMaterial = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.DoubleSide
+    });
+
+    const card = new THREE.Mesh(cardGeometry, cardMaterial);
+    card.position.set(x * radius, y * radius, z * radius);
+
+    // 写真の表を球の外側へ向ける
+    card.lookAt(x * 2, y * 2, z * 2);
+    cards.add(card);
+  }
+}
+
+const defaultTexture = textureLoader.load('./DSC_0034.jpeg', texture => {
+  buildCards([texture]);
+});
+
+photoInput.addEventListener('change', async event => {
+  const files = Array.from(event.target.files || []).filter(file => file.type.startsWith('image/'));
+  if (!files.length) return;
+
+  const textures = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    textureLoader.load(url, texture => {
+      URL.revokeObjectURL(url);
+      resolve(texture);
+    }, undefined, error => {
+      URL.revokeObjectURL(url);
+      reject(error);
+    });
+  })));
+
+  buildCards(textures);
+  photoCount.textContent = files.length + '枚 → 球面100枚';
+  photoInput.value = '';
+});
 // 光
 const mainLight = new THREE.DirectionalLight(0xffffff, 3);
 mainLight.position.set(3, 4, 5);
