@@ -108,7 +108,7 @@ const radius = 0.90;
 const textureLoader = new THREE.TextureLoader();
 
 // 平面ではなく、球面に沿う小さな湾曲パッチを作る
-function createCurvedCardGeometry(center, cardSize = 0.26, segments = 8) {
+function createCurvedCardGeometry(center, cardSize = 0.235, segments = 8) {
   const normal = center.clone().normalize();
   const helper = Math.abs(normal.y) > 0.9
     ? new THREE.Vector3(1, 0, 0)
