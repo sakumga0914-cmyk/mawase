@@ -278,11 +278,15 @@ function animate() {
   sphere.rotation.y += 0.006;
   cards.rotation.y += 0.006;
 
-  // ヘタ式：±15°をゆっくり往復
-  const tilt = Math.sin(time * 0.25) * THREE.MathUtils.degToRad(15);
+  // X軸で前後に±25°、Z軸で左右に±10°。上下の写真も見えるようにするテスト。
+  const tiltX = Math.sin(time * 0.22) * THREE.MathUtils.degToRad(25);
+  const tiltZ = Math.cos(time * 0.18) * THREE.MathUtils.degToRad(10);
 
-  sphere.rotation.z = tilt;
-  cards.rotation.z = tilt;
+  sphere.rotation.x = tiltX;
+  cards.rotation.x = tiltX;
+
+  sphere.rotation.z = tiltZ;
+  cards.rotation.z = tiltZ;
 
   renderer.render(scene, camera);
 }
