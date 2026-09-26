@@ -132,11 +132,17 @@ function buildCards(textures) {
 
     const cardMaterial = new THREE.MeshBasicMaterial({
       map: texture,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
     });
 
     const card = new THREE.Mesh(cardGeometry, cardMaterial);
-    card.position.set(x * radius, y * radius, z * radius);
+
+    // 球の表面から少しだけ外へ。角同士の不自然な食い込みを抑える
+    const cardRadius = radius + 0.025;
+    card.position.set(x * cardRadius, y * cardRadius, z * cardRadius);
 
     // 写真の表を球の外側へ向ける
     card.lookAt(x * 2, y * 2, z * 2);
