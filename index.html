@@ -107,20 +107,23 @@ let usingUploadedPhotos = false;
 // 🍏 v3：参考画像の輪郭を断面として360°回転させる
 // [半径, 高さ]。上の谷→肩→ふっくら胴→少し絞ったお尻。
 const appleProfile = [
-  [0.00, -0.78],
-  [0.22, -0.75],
-  [0.46, -0.66],
-  [0.68, -0.49],
-  [0.82, -0.24],
-  [0.88,  0.03],
-  [0.87,  0.28],
-  [0.79,  0.50],
-  [0.64,  0.66],
-  [0.43,  0.75],
-  [0.23,  0.73],
-  [0.10,  0.67],
-  [0.00,  0.64]
-];
+  // bottom center -> left/right silhouette when revolved
+  [0.00, -0.70],
+  [0.18, -0.73],
+  [0.40, -0.70],
+  [0.62, -0.59],
+  [0.80, -0.39],
+  [0.91, -0.12],
+  [0.93,  0.14],
+  [0.88,  0.38],
+  [0.78,  0.58],
+  [0.64,  0.72],  // pronounced shoulder
+  [0.48,  0.79],  // shoulder peak
+  [0.31,  0.78],
+  [0.18,  0.71],
+  [0.09,  0.62],  // visible stem valley
+  [0.00,  0.59]
+]
 const profilePoints = appleProfile.map(([r, y]) => new THREE.Vector2(r, y));
 const geometry = new THREE.LatheGeometry(profilePoints, 128);
 geometry.computeVertexNormals();
@@ -139,10 +142,10 @@ apple.add(sphere);
 
 // ヘタ
 const stem = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.022, 0.032, 0.22, 18),
+  new THREE.CylinderGeometry(0.018, 0.028, 0.19, 18),
   new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
 );
-stem.position.set(0.02, 0.79, 0);
+stem.position.set(0.02, 0.73, 0);
 stem.rotation.z = -0.10;
 apple.add(stem);
 
@@ -159,7 +162,7 @@ const leaf = new THREE.Mesh(
     side: THREE.DoubleSide
   })
 );
-leaf.position.set(0.03, 0.89, 0.015);
+leaf.position.set(0.03, 0.82, 0.015);
 leaf.rotation.set(-0.92, 0.30, -0.30);
 apple.add(leaf);
 
