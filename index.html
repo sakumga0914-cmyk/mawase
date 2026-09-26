@@ -147,8 +147,8 @@ function estimateCardSize(points) {
 
   const medianNearest = nearestDistances[Math.floor(nearestDistances.length / 2)];
 
-  // 0.72は「重なりを減らしつつ、大穴を作りすぎない」ための暫定値。
-  return THREE.MathUtils.clamp(medianNearest * 0.72, 0.15, 0.30);
+  // 0.90は前回の0.72から約1.25倍。禿げ感を減らすため、少し重なりを許して密度を上げる。
+  return THREE.MathUtils.clamp(medianNearest * 0.90, 0.15, 0.34);
 }
 
 // 平面ではなく、球面に沿う小さな湾曲パッチを作る
