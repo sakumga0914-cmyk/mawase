@@ -60,6 +60,10 @@
   <label for="photoInput">写真を追加</label>
   <input id="photoInput" type="file" accept="image/*" multiple>
   <span id="photoCount">テスト画像 1枚 × 100</span>
+  <select id="layoutMode" aria-label="配置">
+    <option value="golden" selected>黄金角</option>
+    <option value="rows">横ライン</option>
+  </select>
   <select id="testCount" aria-label="テスト枚数">
     <option value="30">30枚</option>
     <option value="50">50枚</option>
@@ -96,6 +100,7 @@ document.body.appendChild(renderer.domElement);
 const photoInput = document.getElementById('photoInput');
 const photoCount = document.getElementById('photoCount');
 const testCount = document.getElementById('testCount');
+const layoutMode = document.getElementById('layoutMode');
 let currentTextures = [];
 let usingUploadedPhotos = false;
 
@@ -140,6 +145,72 @@ function createPlacementPoints(total) {
   }
 
   return points;
+}
+
+function createRowPlacementPoints(total) {
+  // 緯度ごとの横ライン配置。各段の枚数は、その緯度の円周に比例させる。
+  const yLimit = 0.82;
+  const approxRows = Math.max(3, Math.round(Math.sqrt(total * 0.8)));
+  const rows = [];
+
+  for (let row = 0; row < approxRows; row++) {
+    const y = yLimit - ((row + 0.5) / approxRows) * (yLimit * 2);
+    const ringRadius = Math.sqrt(Math.max(0, 1 - y * y));
+    rows.push({ y, ringRadius, weight: ringRadius });
+  }
+
+  const weightSum = rows.reduce((sum, row) => sum + row.weight, 0);
+  let counts = rows.map(row => Math.max(1, Math.floor(total * row.weight / weightSum)));
+  let assigned = counts.reduce((a, b) => a + b, 0);
+
+  while (assigned < total) {
+    let best = 0;
+    let bestScore = -Infinity;
+    for (let i = 0; i < rows.length; i++) {
+      const ideal = total * rows[i].weight / weightSum;
+      const score = ideal - counts[i];
+      if (score > bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    counts[best]++;
+    assigned++;
+  }
+
+  while (assigned > total) {
+    let best = -1;
+    let bestScore = Infinity;
+    for (let i = 0; i < rows.length; i++) {
+      if (counts[i] <= 1) continue;
+      const ideal = total * rows[i].weight / weightSum;
+      const score = ideal - counts[i];
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    if (best < 0) break;
+    counts[best]--;
+    assigned--;
+  }
+
+  const points = [];
+  rows.forEach((row, rowIndex) => {
+    const count = counts[rowIndex];
+    // 一段おきに半コマずらして、縦の一直線感だけは弱める。
+    const offset = (rowIndex % 2) * Math.PI / count;
+    for (let j = 0; j < count; j++) {
+      const theta = (j / count) * Math.PI * 2 + offset;
+      points.push(new THREE.Vector3(
+        Math.cos(theta) * row.ringRadius,
+        row.y,
+        Math.sin(theta) * row.ringRadius
+      ));
+    }
+  });
+
+  return points.slice(0, total);
 }
 
 function estimateCardSize(points) {
@@ -227,7 +298,9 @@ function buildCards(textures, targetCount = textures.length) {
   clearCards();
 
   const total = Math.max(1, targetCount);
-  const points = createPlacementPoints(total);
+  const points = layoutMode.value === 'rows'
+    ? createRowPlacementPoints(total)
+    : createPlacementPoints(total);
   const cardSize = estimateCardSize(points);
 
   for (let i = 0; i < total; i++) {
@@ -255,14 +328,17 @@ textureLoader.load('./DSC_0034.jpeg', texture => {
   buildCards(currentTextures, defaultCount);
 });
 
-testCount.addEventListener('change', () => {
+function rebuildComparison() {
   if (!currentTextures.length) return;
   const count = Number(testCount.value);
   buildCards(currentTextures, count);
   photoCount.textContent = usingUploadedPhotos
     ? currentTextures.length + '枚の写真 → ' + count + 'マスで比較'
     : 'テスト画像 1枚 × ' + count;
-});
+}
+
+testCount.addEventListener('change', rebuildComparison);
+layoutMode.addEventListener('change', rebuildComparison);
 
 photoInput.addEventListener('change', async event => {
   const files = Array.from(event.target.files || []).filter(file => file.type.startsWith('image/'));
