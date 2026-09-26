@@ -60,6 +60,13 @@
   <label for="photoInput">写真を追加</label>
   <input id="photoInput" type="file" accept="image/*" multiple>
   <span id="photoCount">テスト画像 1枚 × 100</span>
+  <select id="testCount" aria-label="テスト枚数">
+    <option value="30">30枚</option>
+    <option value="50">50枚</option>
+    <option value="77">77枚</option>
+    <option value="100" selected>100枚</option>
+    <option value="150">150枚</option>
+  </select>
 </div>
 
 <script type="module">
@@ -88,6 +95,9 @@ document.body.appendChild(renderer.domElement);
 
 const photoInput = document.getElementById('photoInput');
 const photoCount = document.getElementById('photoCount');
+const testCount = document.getElementById('testCount');
+let currentTextures = [];
+let usingUploadedPhotos = false;
 
 // 球
 const geometry = new THREE.SphereGeometry(0.85, 64, 48);
@@ -241,7 +251,17 @@ function buildCards(textures, targetCount = textures.length) {
 }
 
 textureLoader.load('./DSC_0034.jpeg', texture => {
-  buildCards([texture], defaultCount);
+  currentTextures = [texture];
+  buildCards(currentTextures, defaultCount);
+});
+
+testCount.addEventListener('change', () => {
+  if (!currentTextures.length) return;
+  const count = Number(testCount.value);
+  buildCards(currentTextures, count);
+  photoCount.textContent = usingUploadedPhotos
+    ? currentTextures.length + '枚の写真 → ' + count + 'マスで比較'
+    : 'テスト画像 1枚 × ' + count;
 });
 
 photoInput.addEventListener('change', async event => {
@@ -259,7 +279,9 @@ photoInput.addEventListener('change', async event => {
     });
   })));
 
-  // 選んだ枚数ぶんだけ配置マスを作る。77枚なら77マス、156枚なら156マス。
+  // 実写真を読み込んだ直後は、選んだ枚数そのままで表示する。
+  currentTextures = textures;
+  usingUploadedPhotos = true;
   buildCards(textures, textures.length);
   photoCount.textContent = files.length + '枚 → 球面' + files.length + '枚';
   photoInput.value = '';
