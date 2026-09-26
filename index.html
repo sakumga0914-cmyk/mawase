@@ -116,7 +116,50 @@ const appleProfile = [
   [0.520,0.655],[0.445,0.650],[0.375,0.625],[0.310,0.585],
   [0.250,0.535],[0.195,0.485],[0.145,0.445],[0.105,0.425],
   [0.070,0.430],[0.040,0.445],[0.018,0.455],[0.00,0.458]
-]
+];
+
+// 🍏 復旧：断面から本体を生成
+const profilePoints = appleProfile.map(([r, y]) => new THREE.Vector2(r, y));
+const geometry = new THREE.LatheGeometry(profilePoints, 192);
+geometry.computeVertexNormals();
+
+const material = new THREE.MeshPhysicalMaterial({
+  color: 0x9bcf52,
+  roughness: 0.46,
+  metalness: 0.0,
+  clearcoat: 0.32,
+  clearcoatRoughness: 0.34
+});
+const sphere = new THREE.Mesh(geometry, material);
+sphere.castShadow = true;
+sphere.receiveShadow = true;
+
+const apple = new THREE.Group();
+apple.add(sphere);
+
+// ヘタ
+const stem = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.018, 0.028, 0.19, 18),
+  new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
+);
+stem.position.set(0.02, 0.64, 0);
+stem.rotation.z = -0.10;
+apple.add(stem);
+
+// 葉っぱ
+const leafShape = new THREE.Shape();
+leafShape.moveTo(0, 0);
+leafShape.bezierCurveTo(0.08, 0.07, 0.20, 0.10, 0.31, 0.055);
+leafShape.bezierCurveTo(0.24, -0.035, 0.09, -0.055, 0, 0);
+const leaf = new THREE.Mesh(
+  new THREE.ShapeGeometry(leafShape, 24),
+  new THREE.MeshStandardMaterial({ color: 0x3f7f32, roughness: 0.62, side: THREE.DoubleSide })
+);
+leaf.position.set(0.018, 0.69, 0.018);
+leaf.rotation.set(-0.10, 0.20, 1.28);
+apple.add(leaf);
+
+scene.add(apple);
 
   for (let row = 0; row < approxRows; row++) {
     const y = yLimit - ((row + 0.5) / approxRows) * (yLimit * 2);
