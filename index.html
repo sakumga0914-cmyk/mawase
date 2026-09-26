@@ -65,8 +65,9 @@ const radius = 0.90;
 
 for (let i = 0; i < count; i++) {
 
-  // 球面へなるべく均等に配置
-  const y = 1 - (i / (count - 1)) * 2;
+  // 上下10%ずつを空け、残った帯の中へ均等に配置
+  const yLimit = 0.8;
+  const y = yLimit - (i / (count - 1)) * (yLimit * 2);
   const r = Math.sqrt(1 - y * y);
   const theta = Math.PI * (3 - Math.sqrt(5)) * i;
 
