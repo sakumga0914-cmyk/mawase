@@ -104,29 +104,46 @@ const layoutMode = document.getElementById('layoutMode');
 let currentTextures = [];
 let usingUploadedPhotos = false;
 
-// 🍏 試作：球を少しだけリンゴ形へ変形
-const geometry = new THREE.SphereGeometry(0.85, 96, 64);
+// 🍏 v2：球ではなく「りんごの輪郭」を作る
+const geometry = new THREE.SphereGeometry(0.85, 128, 80);
 {
   const pos = geometry.attributes.position;
   const v = new THREE.Vector3();
+
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
-    const yN = v.y / 0.85;
-    const radial = Math.sqrt(v.x * v.x + v.z * v.z) / 0.85;
 
-    // 肩をふっくら、上下を少し絞る。真球感は残す。
-    let scaleXZ = 1.0 + 0.055 * (1 - yN * yN);
-    scaleXZ -= 0.045 * Math.pow(Math.abs(yN), 3);
+    // 元の球面上での高さ -1〜1
+    const yN = THREE.MathUtils.clamp(v.y / 0.85, -1, 1);
+    const ay = Math.abs(yN);
 
-    // ヘタ周りの浅いくぼみ
-    const topDent = Math.max(0, (yN - 0.68) / 0.32);
-    const dent = 0.075 * topDent * topDent * Math.max(0, 1 - radial);
+    // 少し縦につぶして、丸玉感を消す
+    v.y *= 0.93;
 
-    v.x *= scaleXZ;
-    v.z *= scaleXZ;
-    v.y -= dent;
+    // 中腹はふっくら。上部は「肩」を張らせる。
+    let xz = 1.04;
+    xz += 0.085 * Math.exp(-Math.pow((yN - 0.42) / 0.27, 2));
+    xz += 0.035 * Math.exp(-Math.pow((yN + 0.18) / 0.48, 2));
+
+    // 上端と下端を絞る
+    xz -= 0.13 * Math.pow(Math.max(0, (ay - 0.70) / 0.30), 1.35);
+
+    // 下側は少しだけ細くしてリンゴのお尻を作る
+    if (yN < -0.35) xz -= 0.035 * Math.pow((-yN - 0.35) / 0.65, 1.2);
+
+    v.x *= xz;
+    v.z *= xz;
+
+    // ヘタ周辺だけ明確に凹ませる。
+    // 頂点だけではなく上面の広めの範囲を落とす。
+    if (yN > 0.62) {
+      const t = (yN - 0.62) / 0.38;
+      v.y -= 0.115 * t * t;
+    }
+
     pos.setXYZ(i, v.x, v.y, v.z);
   }
+
   pos.needsUpdate = true;
   geometry.computeVertexNormals();
 }
@@ -145,22 +162,28 @@ apple.add(sphere);
 
 // ヘタ
 const stem = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.035, 0.045, 0.32, 18),
+  new THREE.CylinderGeometry(0.026, 0.038, 0.27, 18),
   new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
 );
-stem.position.set(0.02, 0.96, 0);
+stem.position.set(0.02, 0.88, 0);
 stem.rotation.z = -0.10;
 apple.add(stem);
 
-// 葉っぱ：薄い楕円を少し傾ける
+// 葉っぱ：先端のある葉形を ShapeGeometry で作る
+const leafShape = new THREE.Shape();
+leafShape.moveTo(0, 0);
+leafShape.bezierCurveTo(0.11, 0.12, 0.30, 0.13, 0.43, 0.02);
+leafShape.bezierCurveTo(0.29, -0.08, 0.11, -0.08, 0, 0);
 const leaf = new THREE.Mesh(
-  new THREE.SphereGeometry(0.18, 28, 16),
-  new THREE.MeshStandardMaterial({ color: 0x3f7f32, roughness: 0.65 })
+  new THREE.ShapeGeometry(leafShape, 24),
+  new THREE.MeshStandardMaterial({
+    color: 0x3f7f32,
+    roughness: 0.62,
+    side: THREE.DoubleSide
+  })
 );
-leaf.scale.set(1.45, 0.08, 0.62);
-leaf.position.set(0.18, 1.02, 0.01);
-leaf.rotation.z = -0.42;
-leaf.rotation.y = 0.35;
+leaf.position.set(0.04, 0.98, 0.015);
+leaf.rotation.set(-0.72, 0.28, -0.38);
 apple.add(leaf);
 
 scene.add(apple);
