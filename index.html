@@ -126,6 +126,38 @@ const defaultCount = 100;
 const radius = 0.90;
 const textureLoader = new THREE.TextureLoader();
 
+function prepareTexture(texture) {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  return texture;
+}
+
+function getTextureAspect(texture) {
+  const image = texture.image;
+  const width = image?.naturalWidth || image?.videoWidth || image?.width || 1;
+  const height = image?.naturalHeight || image?.videoHeight || image?.height || 1;
+  return width / height;
+}
+
+function getCardDimensions(texture, baseSize) {
+  // 元画像の比率は守る。面積はだいたい揃えて、極端な縦長・横長だけ暴れを抑える。
+  const aspect = THREE.MathUtils.clamp(getTextureAspect(texture), 0.42, 2.4);
+  let width = baseSize * Math.sqrt(aspect);
+  let height = baseSize / Math.sqrt(aspect);
+
+  const maxLongSide = baseSize * 1.42;
+  const longSide = Math.max(width, height);
+  if (longSide > maxLongSide) {
+    const scale = maxLongSide / longSide;
+    width *= scale;
+    height *= scale;
+  }
+
+  return { width, height };
+}
+
 function createPlacementPoints(total) {
   const points = [];
   const yLimit = 0.82;
@@ -230,12 +262,12 @@ function estimateCardSize(points) {
 
   const medianNearest = nearestDistances[Math.floor(nearestDistances.length / 2)];
 
-  // 0.90は前回の0.72から約1.25倍。禿げ感を減らすため、少し重なりを許して密度を上げる。
-  return THREE.MathUtils.clamp(medianNearest * 0.90, 0.15, 0.34);
+  // 正方形固定より見た目の幅が増えるので、少しだけ控えめにする。
+  return THREE.MathUtils.clamp(medianNearest * 0.82, 0.13, 0.31);
 }
 
-// 平面ではなく、球面に沿う小さな湾曲パッチを作る
-function createCurvedCardGeometry(center, cardSize = 0.235, segments = 8) {
+// 平面ではなく、球面に沿う小さな湾曲パッチを作る。写真比率はここで保持する。
+function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235, segments = 8) {
   const normal = center.clone().normalize();
   const helper = Math.abs(normal.y) > 0.9
     ? new THREE.Vector3(1, 0, 0)
@@ -251,11 +283,11 @@ function createCurvedCardGeometry(center, cardSize = 0.235, segments = 8) {
 
   for (let iy = 0; iy <= segments; iy++) {
     const v = iy / segments;
-    const dy = (v - 0.5) * cardSize;
+    const dy = (v - 0.5) * cardHeight;
 
     for (let ix = 0; ix <= segments; ix++) {
       const u = ix / segments;
-      const dx = (u - 0.5) * cardSize;
+      const dx = (u - 0.5) * cardWidth;
 
       const point = normal.clone()
         .addScaledVector(tangentX, dx)
@@ -301,19 +333,20 @@ function buildCards(textures, targetCount = textures.length) {
   const points = layoutMode.value === 'rows'
     ? createRowPlacementPoints(total)
     : createPlacementPoints(total);
-  const cardSize = estimateCardSize(points);
+  const baseCardSize = estimateCardSize(points);
 
   for (let i = 0; i < total; i++) {
     const texture = textures[i % textures.length];
+    const { width, height } = getCardDimensions(texture, baseCardSize);
 
     const cardMaterial = new THREE.MeshBasicMaterial({
       map: texture,
       side: THREE.DoubleSide
     });
 
-    // 写真そのものを球面に沿わせる
+    // 写真そのものを球面に沿わせる。元比率は守り、正方形へ押し込まない。
     const center = points[i].clone().multiplyScalar(radius);
-    const curvedGeometry = createCurvedCardGeometry(center, cardSize);
+    const curvedGeometry = createCurvedCardGeometry(center, width, height);
     const card = new THREE.Mesh(curvedGeometry, cardMaterial);
 
     // 外周の「紙感」を抑えるため、球面上の向きを保持する。
@@ -324,7 +357,7 @@ function buildCards(textures, targetCount = textures.length) {
 }
 
 textureLoader.load('./DSC_0034.jpeg', texture => {
-  currentTextures = [texture];
+  currentTextures = [prepareTexture(texture)];
   buildCards(currentTextures, defaultCount);
 });
 
@@ -348,7 +381,7 @@ photoInput.addEventListener('change', async event => {
     const url = URL.createObjectURL(file);
     textureLoader.load(url, texture => {
       URL.revokeObjectURL(url);
-      resolve(texture);
+      resolve(prepareTexture(texture));
     }, undefined, error => {
       URL.revokeObjectURL(url);
       reject(error);
