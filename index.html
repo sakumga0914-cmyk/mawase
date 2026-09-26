@@ -232,6 +232,10 @@ function buildCards(textures, targetCount = textures.length) {
     const center = points[i].clone().multiplyScalar(radius);
     const curvedGeometry = createCurvedCardGeometry(center, cardSize);
     const card = new THREE.Mesh(curvedGeometry, cardMaterial);
+
+    // 外周の「紙感」を抑えるため、球面上の向きを保持する。
+    // 正面では写真本来の明るさ、横を向くほど暗くする（透明にはしない）。
+    card.userData.surfaceNormal = points[i].clone().normalize();
     cards.add(card);
   }
 }
@@ -290,6 +294,24 @@ function animate() {
 
   sphere.rotation.z = tiltZ;
   cards.rotation.z = tiltZ;
+
+  // カメラに対して横向きになった写真だけを暗くする。
+  // 正面の写真は brightness=1.0 のままなので、写真自体は薄くならない。
+  const groupQuaternion = cards.getWorldQuaternion(new THREE.Quaternion());
+  const worldNormal = new THREE.Vector3();
+
+  cards.children.forEach(card => {
+    worldNormal
+      .copy(card.userData.surfaceNormal)
+      .applyQuaternion(groupQuaternion);
+
+    // camera は +Z 側。正面ほど 1、外周ほど 0、裏側は負になる。
+    const facing = worldNormal.z;
+    const frontness = THREE.MathUtils.smoothstep(facing, 0.05, 0.72);
+    const brightness = THREE.MathUtils.lerp(0.52, 1.0, frontness);
+
+    card.material.color.setScalar(brightness);
+  });
 
   renderer.render(scene, camera);
 }
