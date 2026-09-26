@@ -107,110 +107,14 @@ let usingUploadedPhotos = false;
 // 🍏 v3：参考画像の輪郭を断面として360°回転させる
 // [半径, 高さ]。上の谷→肩→ふっくら胴→少し絞ったお尻。
 const appleProfile = [
-  // bottom center -> left/right silhouette when revolved
-  [0.00, -0.70],
-  [0.18, -0.73],
-  [0.40, -0.70],
-  [0.62, -0.59],
-  [0.80, -0.39],
-  [0.91, -0.12],
-  [0.93,  0.14],
-  [0.88,  0.38],
-  [0.78,  0.58],
-  [0.64,  0.72],  // pronounced shoulder
-  [0.48,  0.79],  // shoulder peak
-  [0.31,  0.78],
-  [0.18,  0.71],
-  [0.09,  0.62],  // visible stem valley
-  [0.00,  0.59]
+  [0.00,-0.69],[0.10,-0.71],[0.20,-0.72],[0.31,-0.71],
+  [0.42,-0.68],[0.53,-0.63],[0.64,-0.56],[0.74,-0.47],
+  [0.82,-0.36],[0.88,-0.23],[0.92,-0.09],[0.94,0.06],
+  [0.94,0.20],[0.91,0.34],[0.86,0.47],[0.79,0.58],
+  [0.70,0.67],[0.60,0.73],[0.50,0.76],[0.40,0.75],
+  [0.31,0.72],[0.23,0.67],[0.16,0.61],[0.11,0.57],
+  [0.07,0.55],[0.035,0.555],[0.00,0.57]
 ]
-const profilePoints = appleProfile.map(([r, y]) => new THREE.Vector2(r, y));
-const geometry = new THREE.LatheGeometry(profilePoints, 128);
-geometry.computeVertexNormals();
-
-const material = new THREE.MeshPhysicalMaterial({
-  color: 0x9bcf52,
-  roughness: 0.46,
-  metalness: 0.02,
-  clearcoat: 0.32,
-  clearcoatRoughness: 0.34
-});
-
-const sphere = new THREE.Mesh(geometry, material);
-const apple = new THREE.Group();
-apple.add(sphere);
-
-// ヘタ
-const stem = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.018, 0.028, 0.19, 18),
-  new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
-);
-stem.position.set(0.02, 0.73, 0);
-stem.rotation.z = -0.10;
-apple.add(stem);
-
-// 葉っぱ：先端のある葉形を ShapeGeometry で作る
-const leafShape = new THREE.Shape();
-leafShape.moveTo(0, 0);
-leafShape.bezierCurveTo(0.11, 0.12, 0.30, 0.13, 0.43, 0.02);
-leafShape.bezierCurveTo(0.29, -0.08, 0.11, -0.08, 0, 0);
-const leaf = new THREE.Mesh(
-  new THREE.ShapeGeometry(leafShape, 24),
-  new THREE.MeshStandardMaterial({
-    color: 0x3f7f32,
-    roughness: 0.62,
-    side: THREE.DoubleSide
-  })
-);
-leaf.position.set(0.03, 0.82, 0.015);
-leaf.rotation.set(-0.92, 0.30, -0.30);
-apple.add(leaf);
-
-scene.add(apple);
-
-// 写真を球面に配置
-const cards = new THREE.Group();
-scene.add(cards);
-cards.visible = false; // 🍏の造形確認を先にする
-
-const defaultCount = 100;
-const radius = 0.90;
-const textureLoader = new THREE.TextureLoader();
-
-function prepareTexture(texture) {
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.generateMipmaps = true;
-  return texture;
-}
-
-function getTextureAspect(texture) {
-  const image = texture.image;
-  const width = image?.naturalWidth || image?.videoWidth || image?.width || 1;
-  const height = image?.naturalHeight || image?.videoHeight || image?.height || 1;
-  return width / height;
-}
-
-function getCardDimensions(texture, baseSize) {
-  // 元画像の比率は守る。面積はだいたい揃えて、極端な縦長・横長だけ暴れを抑える。
-  const aspect = THREE.MathUtils.clamp(getTextureAspect(texture), 0.42, 2.4);
-  let width = baseSize * Math.sqrt(aspect);
-  let height = baseSize / Math.sqrt(aspect);
-
-  const maxLongSide = baseSize * 1.42;
-  const longSide = Math.max(width, height);
-  if (longSide > maxLongSide) {
-    const scale = maxLongSide / longSide;
-    width *= scale;
-    height *= scale;
-  }
-
-  return { width, height };
-}
-
-function createPlacementPoints(total) {
-  const points = [];
   const yLimit = 0.82;
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
