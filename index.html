@@ -118,6 +118,36 @@ const material = new THREE.MeshPhysicalMaterial({
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
+// りんごのヘタ＋葉っぱ。
+// 写真球とは別パーツにして、球の傾きと一緒に動かす。
+const appleTop = new THREE.Group();
+scene.add(appleTop);
+
+const stemGeometry = new THREE.CylinderGeometry(0.035, 0.045, 0.30, 18);
+const stemMaterial = new THREE.MeshStandardMaterial({
+  color: 0x6f4a2f,
+  roughness: 0.72,
+  metalness: 0
+});
+const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+stem.position.set(0, 0.96, 0);
+stem.rotation.z = THREE.MathUtils.degToRad(-8);
+appleTop.add(stem);
+
+// 葉は少し厚みのある楕円。球に埋まらない高さまで持ち上げる。
+const leafGeometry = new THREE.SphereGeometry(0.15, 28, 16);
+leafGeometry.scale(1.55, 0.12, 0.68);
+const leafMaterial = new THREE.MeshStandardMaterial({
+  color: 0x4f8a4c,
+  roughness: 0.58,
+  metalness: 0
+});
+const leaf = new THREE.Mesh(leafGeometry, leafMaterial);
+leaf.position.set(0.14, 1.035, 0.015);
+leaf.rotation.z = THREE.MathUtils.degToRad(-24);
+leaf.rotation.y = THREE.MathUtils.degToRad(18);
+appleTop.add(leaf);
+
 // 写真を球面に配置
 const cards = new THREE.Group();
 scene.add(cards);
@@ -415,6 +445,7 @@ function animate() {
   // ゆっくり横回転
   sphere.rotation.y += 0.006;
   cards.rotation.y += 0.006;
+  appleTop.rotation.y += 0.006;
 
   // X軸で前後に±20°、Z軸で左右に±10°。全球感を残しつつ、動きすぎを少し抑える。
   const tiltX = Math.sin(time * 0.22) * THREE.MathUtils.degToRad(20);
@@ -422,9 +453,11 @@ function animate() {
 
   sphere.rotation.x = tiltX;
   cards.rotation.x = tiltX;
+  appleTop.rotation.x = tiltX;
 
   sphere.rotation.z = tiltZ;
   cards.rotation.z = tiltZ;
+  appleTop.rotation.z = tiltZ;
 
   // カメラに対して横向きになった写真だけを暗くする。
   // 正面の写真は brightness=1.0 のままなので、写真自体は薄くならない。
