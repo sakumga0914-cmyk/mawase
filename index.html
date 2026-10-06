@@ -121,8 +121,9 @@ const appleProfile = [
   [0.48,  0.79],  // shoulder peak
   [0.31,  0.78],
   [0.18,  0.71],
-  [0.09,  0.62],  // visible stem valley
-  [0.00,  0.59]
+  [0.11,  0.68],  // shallow dimple around the stem
+  [0.05,  0.67],
+  [0.00,  0.67]
 ]
 const profilePoints = appleProfile.map(([r, y]) => new THREE.Vector2(r, y));
 const geometry = new THREE.LatheGeometry(profilePoints, 128);
