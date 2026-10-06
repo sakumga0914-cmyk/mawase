@@ -146,7 +146,7 @@ const stem = new THREE.Mesh(
   new THREE.CylinderGeometry(0.018, 0.032, 0.30, 18),
   new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
 );
-stem.position.set(0.015, 0.79, 0.015);
+stem.position.set(0.015, 0.835, 0.015);
 stem.rotation.z = -0.08;
 apple.add(stem);
 
@@ -163,8 +163,8 @@ const leaf = new THREE.Mesh(
     side: THREE.DoubleSide
   })
 );
-leaf.position.set(0.025, 0.91, 0.025);
-leaf.rotation.set(-0.42, 0.22, -0.26);
+leaf.position.set(-0.005, 0.965, 0.035);
+leaf.rotation.set(-0.34, 0.20, -0.20);
 apple.add(leaf);
 
 scene.add(apple);
