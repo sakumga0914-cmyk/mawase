@@ -150,22 +150,45 @@ stem.position.set(0.015, 0.835, 0.015);
 stem.rotation.z = -0.08;
 apple.add(stem);
 
-// 葉っぱ：先端のある葉形を ShapeGeometry で作る
-const leafShape = new THREE.Shape();
-leafShape.moveTo(0, 0);
-leafShape.bezierCurveTo(0.11, 0.12, 0.30, 0.13, 0.43, 0.02);
-leafShape.bezierCurveTo(0.29, -0.08, 0.11, -0.08, 0, 0);
+// 葉っぱ：中央でわずかに折れ、先端が細くなる立体的な葉。
+// 左右を別の面にして浅いV字を作り、平たい切り紙感を減らす。
+const leafLength = 0.43;
+const leafHalfWidth = 0.105;
+const leafFold = 0.026;
+const leafPositions = new Float32Array([
+  // left half: root -> left shoulder -> tip
+  0.00,  0.00,  leafFold,
+  0.17,  leafHalfWidth, 0.00,
+  leafLength, 0.00, leafFold,
+  // right half: root -> tip -> right shoulder
+  0.00,  0.00,  leafFold,
+  leafLength, 0.00, leafFold,
+  0.17, -leafHalfWidth, 0.00
+]);
+const leafGeometry = new THREE.BufferGeometry();
+leafGeometry.setAttribute('position', new THREE.BufferAttribute(leafPositions, 3));
+leafGeometry.computeVertexNormals();
+
 const leaf = new THREE.Mesh(
-  new THREE.ShapeGeometry(leafShape, 24),
+  leafGeometry,
   new THREE.MeshStandardMaterial({
     color: 0x3f7f32,
-    roughness: 0.62,
+    roughness: 0.58,
     side: THREE.DoubleSide
   })
 );
 leaf.position.set(-0.005, 0.965, 0.035);
 leaf.rotation.set(-0.34, 0.20, -0.20);
 apple.add(leaf);
+
+// 控えめな中央葉脈。葉の折れ目に沿わせる。
+const vein = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.006, 0.004, leafLength * 0.82, 10),
+  new THREE.MeshStandardMaterial({ color: 0x315f29, roughness: 0.72 })
+);
+vein.position.set(leafLength * 0.41, 0, leafFold + 0.004);
+vein.rotation.z = -Math.PI / 2;
+leaf.add(vein);
 
 scene.add(apple);
 
