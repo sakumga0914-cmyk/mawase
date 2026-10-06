@@ -141,52 +141,92 @@ const sphere = new THREE.Mesh(geometry, material);
 const apple = new THREE.Group();
 apple.add(sphere);
 
-// ヘタ
+// ヘタ：ピカ参考画像をもとに、少し太くテーパーした短い枝にする。
 const stem = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.018, 0.032, 0.30, 18),
-  new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
+  new THREE.CylinderGeometry(0.022, 0.038, 0.31, 24),
+  new THREE.MeshStandardMaterial({
+    color: 0x694326,
+    roughness: 0.78,
+    metalness: 0
+  })
 );
 stem.position.set(0.015, 0.835, 0.015);
 stem.rotation.z = -0.08;
 apple.add(stem);
 
-// 葉っぱ：中央でわずかに折れ、先端が細くなる立体的な葉。
-// 左右を別の面にして浅いV字を作り、平たい切り紙感を減らす。
-const leafLength = 0.43;
-const leafHalfWidth = 0.105;
-const leafFold = 0.026;
-const leafPositions = new Float32Array([
-  // left half: root -> left shoulder -> tip
-  0.00,  0.00,  leafFold,
-  0.17,  leafHalfWidth, 0.00,
-  leafLength, 0.00, leafFold,
-  // right half: root -> tip -> right shoulder
-  0.00,  0.00,  leafFold,
-  leafLength, 0.00, leafFold,
-  0.17, -leafHalfWidth, 0.00
-]);
-const leafGeometry = new THREE.BufferGeometry();
-leafGeometry.setAttribute('position', new THREE.BufferAttribute(leafPositions, 3));
-leafGeometry.computeVertexNormals();
+// 葉っぱ：ピカ参考画像の「丸い肩＋尖った先端」を3Dメッシュ化。
+// 幅方向と長さ方向に分割し、中央葉脈を高く・左右を低くして自然な反りを作る。
+function createAppleLeafGeometry() {
+  const lengthSegments = 12;
+  const widthSegments = 8;
+  const length = 0.48;
+  const maxHalfWidth = 0.125;
+  const positions = [];
+  const indices = [];
+
+  for (let i = 0; i <= lengthSegments; i++) {
+    const t = i / lengthSegments;
+    const x = t * length;
+
+    // 根元は細く、1/3付近でふくらみ、先端へ滑らかに絞る。
+    const envelope = Math.sin(Math.PI * Math.pow(t, 0.82));
+    const asymmetry = 0.92 + 0.08 * Math.sin(t * Math.PI);
+    const halfWidth = maxHalfWidth * envelope * asymmetry;
+
+    for (let j = 0; j <= widthSegments; j++) {
+      const s = j / widthSegments;
+      const y = (s * 2 - 1) * halfWidth;
+      const across = Math.abs(s * 2 - 1);
+
+      // 中央葉脈を少し高くし、葉全体は先端に向かって軽く上へ反る。
+      const centerRidge = 0.020 * (1 - across);
+      const tipCurl = 0.032 * t * t;
+      const edgeDrop = -0.012 * across * across;
+      const z = centerRidge + tipCurl + edgeDrop;
+
+      positions.push(x, y, z);
+    }
+  }
+
+  const row = widthSegments + 1;
+  for (let i = 0; i < lengthSegments; i++) {
+    for (let j = 0; j < widthSegments; j++) {
+      const a = i * row + j;
+      const b = a + 1;
+      const c = a + row;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 const leaf = new THREE.Mesh(
-  leafGeometry,
+  createAppleLeafGeometry(),
   new THREE.MeshStandardMaterial({
     color: 0x3f7f32,
-    roughness: 0.58,
+    roughness: 0.55,
+    metalness: 0,
     side: THREE.DoubleSide
   })
 );
-leaf.position.set(-0.005, 0.965, 0.035);
-leaf.rotation.set(-0.34, 0.20, -0.20);
+
+// 根元をヘタの脇へ接続。参考画像のように横へ伸びる。
+leaf.position.set(0.005, 0.955, 0.025);
+leaf.rotation.set(-0.30, 0.18, 2.92);
 apple.add(leaf);
 
-// 控えめな中央葉脈。葉の折れ目に沿わせる。
+// 中央葉脈：葉面より少しだけ浮かせる。
 const vein = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.006, 0.004, leafLength * 0.82, 10),
+  new THREE.CylinderGeometry(0.005, 0.003, 0.39, 12),
   new THREE.MeshStandardMaterial({ color: 0x315f29, roughness: 0.72 })
 );
-vein.position.set(leafLength * 0.41, 0, leafFold + 0.004);
+vein.position.set(0.205, 0, 0.025);
 vein.rotation.z = -Math.PI / 2;
 leaf.add(vein);
 
