@@ -143,11 +143,11 @@ apple.add(sphere);
 
 // ヘタ
 const stem = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.018, 0.028, 0.34, 18),
+  new THREE.CylinderGeometry(0.018, 0.032, 0.30, 18),
   new THREE.MeshStandardMaterial({ color: 0x5a321d, roughness: 0.8 })
 );
-stem.position.set(0.02, 0.94, 0.10);
-stem.rotation.z = -0.10;
+stem.position.set(0.015, 0.79, 0.015);
+stem.rotation.z = -0.08;
 apple.add(stem);
 
 // 葉っぱ：先端のある葉形を ShapeGeometry で作る
@@ -163,8 +163,8 @@ const leaf = new THREE.Mesh(
     side: THREE.DoubleSide
   })
 );
-leaf.position.set(0.10, 1.08, 0.13);
-leaf.rotation.set(-0.58, 0.30, -0.34);
+leaf.position.set(0.025, 0.91, 0.025);
+leaf.rotation.set(-0.42, 0.22, -0.26);
 apple.add(leaf);
 
 scene.add(apple);
