@@ -456,16 +456,13 @@ function buildCards(textures, targetCount = textures.length) {
 
     const cardMaterial = new THREE.MeshBasicMaterial({
       map: texture,
-      side: THREE.DoubleSide,
-      depthTest: false, // 診断用: りんごによる遮蔽を無視
-      depthWrite: false
+      side: THREE.DoubleSide
     });
 
     // 写真そのものを球面に沿わせる。元比率は守り、正方形へ押し込まない。
     const center = points[i].clone().multiplyScalar(radius);
     const curvedGeometry = createCurvedCardGeometry(center, width, height);
     const card = new THREE.Mesh(curvedGeometry, cardMaterial);
-    card.renderOrder = 10; // 診断用: りんごより後に描画
 
     // 外周の「紙感」を抑えるため、球面上の向きを保持する。
     // 正面では写真本来の明るさ、横を向くほど暗くする（透明にはしない）。
