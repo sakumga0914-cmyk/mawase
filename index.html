@@ -153,7 +153,7 @@ const cards = new THREE.Group();
 scene.add(cards);
 
 const defaultCount = 100;
-const radius = 0.90;
+const radius = 1.12;
 const textureLoader = new THREE.TextureLoader();
 
 function prepareTexture(texture) {
@@ -308,7 +308,7 @@ function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235,
   const positions = [];
   const uvs = [];
   const indices = [];
-  const cardLift = 0.008;
+  const cardLift = 0.012;
   const surfaceRadius = radius + cardLift;
 
   for (let iy = 0; iy <= segments; iy++) {
