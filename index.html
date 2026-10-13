@@ -238,7 +238,7 @@ scene.add(cards);
 cards.visible = true; // 写真表示を有効化
 
 const defaultCount = 100;
-const radius = 1.12;
+const radius = 0.93;
 const textureLoader = new THREE.TextureLoader();
 
 function prepareTexture(texture) {
@@ -381,6 +381,24 @@ function estimateCardSize(points) {
   return THREE.MathUtils.clamp(medianNearest * 0.82, 0.13, 0.31);
 }
 
+// リンゴの断面と放射線の交点。各写真頂点を実際の表面に合わせる。
+function appleSurfaceDistance(direction) {
+  const radial = Math.hypot(direction.x, direction.z);
+  const vertical = direction.y;
+  let outermost = 0;
+  for (let i = 0; i < appleProfile.length - 1; i++) {
+    const [r0, y0] = appleProfile[i];
+    const [r1, y1] = appleProfile[i + 1];
+    const dr = r1 - r0, dy = y1 - y0;
+    const det = radial * dy - vertical * dr;
+    if (Math.abs(det) < 1e-9) continue;
+    const t = (r0 * dy - y0 * dr) / det;
+    const u = (r0 * vertical - y0 * radial) / det;
+    if (t > 0 && u >= -1e-6 && u <= 1 + 1e-6) outermost = Math.max(outermost, t);
+  }
+  return outermost || 0.75;
+}
+
 // 平面ではなく、球面に沿う小さな湾曲パッチを作る。写真比率はここで保持する。
 function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235, segments = 8) {
   const normal = center.clone().normalize();
@@ -393,8 +411,7 @@ function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235,
   const positions = [];
   const uvs = [];
   const indices = [];
-  const cardLift = 0.012;
-  const surfaceRadius = radius + cardLift;
+  const cardLift = 0.008; // 表面からわずかに浮かせてちらつきを防ぐ
 
   for (let iy = 0; iy <= segments; iy++) {
     const v = iy / segments;
@@ -404,11 +421,11 @@ function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235,
       const u = ix / segments;
       const dx = (u - 0.5) * cardWidth;
 
-      const point = normal.clone()
+      const direction = normal.clone()
         .addScaledVector(tangentX, dx)
         .addScaledVector(tangentY, dy)
-        .normalize()
-        .multiplyScalar(surfaceRadius);
+        .normalize();
+      const point = direction.multiplyScalar(appleSurfaceDistance(direction) + cardLift);
 
       positions.push(point.x, point.y, point.z);
       uvs.push(u, v);
