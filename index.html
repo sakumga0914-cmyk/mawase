@@ -235,10 +235,10 @@ scene.add(apple);
 // 写真を球面に配置
 const cards = new THREE.Group();
 scene.add(cards);
-cards.visible = false; // 🍏の造形確認を先にする
+cards.visible = true; // 写真表示を有効化
 
 const defaultCount = 100;
-const radius = 0.90;
+const radius = 1.12;
 const textureLoader = new THREE.TextureLoader();
 
 function prepareTexture(texture) {
@@ -393,7 +393,7 @@ function createCurvedCardGeometry(center, cardWidth = 0.235, cardHeight = 0.235,
   const positions = [];
   const uvs = [];
   const indices = [];
-  const cardLift = 0.008;
+  const cardLift = 0.012;
   const surfaceRadius = radius + cardLift;
 
   for (let iy = 0; iy <= segments; iy++) {
@@ -536,6 +536,7 @@ function animate() {
 
   apple.rotation.x = tiltX;
   apple.rotation.z = tiltZ;
+  cards.rotation.copy(apple.rotation);
 
   // カメラに対して横向きになった写真だけを暗くする。
   // 正面の写真は brightness=1.0 のままなので、写真自体は薄くならない。
